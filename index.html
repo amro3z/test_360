@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>360 Manual Capture</title>
+    <style>
+        video {
+            width: 100%;
+            height: auto;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Rotate slowly - Auto Capture</h2>
+    <video id="camera" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <p id="angleInfo">Angle: 0</p>
+
+    <script>
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const angleInfo = document.getElementById('angleInfo');
+
+        let lastAngle = 0;
+        let stream;
+        let captureCount = 0;
+
+        async function startCamera() {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = stream;
+        }
+
+        function captureFrame() {
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/jpeg');
+            const a = document.createElement('a');
+            a.href = data;
+            a.download = `frame_${captureCount++}.jpg`;
+            a.click();
+        }
+
+        window.addEventListener('deviceorientation', (event) => {
+            let yaw = event.alpha; // 0 to 360
+            angleInfo.innerText = `Angle: ${Math.round(yaw)}°`;
+
+            if (Math.abs(yaw - lastAngle) >= 30) {
+                lastAngle = yaw;
+                captureFrame();
+            }
+        });
+
+        startCamera();
+    </script>
+</body>
+
+</html>
